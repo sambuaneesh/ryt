@@ -473,3 +473,21 @@ html, body { overflow-x: clip; }
 .pick-list input { width: 18px; height: 18px; accent-color: var(--ink); }
 
 .list-toggle { font-size: 14px; color: var(--ink-2); max-width: 340px; }
+
+/* ---------- admin */
+.admin-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin: 0 0 22px; }
+.admin-stats div { border: 2px solid var(--ink); background: var(--sheet); padding: 10px 14px; border-radius: 6px; }
+.admin-stats dt { font: 700 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.admin-stats dd { margin: 6px 0 0; font: 400 1.7rem/1 var(--black); }
+.admin-list { border-top: 2px solid var(--ink); }
+.admin-user { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 2px dashed var(--hair); }
+.admin-user a { color: inherit; text-decoration: none; }
+.admin-user .who b { font: 700 1.05rem/1.25 var(--grot); }
+.admin-user .who > div { margin-top: 3px; overflow-wrap: anywhere; }
+.admin-user .nums { display: flex; gap: 14px; margin: 0; text-align: center; }
+.admin-user .nums dt { font: 700 9px/1 var(--mono); text-transform: uppercase; color: var(--ink-3); }
+.admin-user .nums dd { margin: 4px 0 0; font: 700 1rem/1 var(--mono); }
+@media (max-width: 560px) {
+  .admin-user { grid-template-columns: auto minmax(0, 1fr); }
+  .admin-user .nums { grid-column: 2; justify-content: flex-start; }
+}

@@ -376,6 +376,23 @@ export const api = {
     }))
   },
 
+  // ---------- admin: in the demo, @aneesh is the admin
+  async isAdmin() { return later(profileOf(uid())?.handle === 'aneesh') },
+  async adminUsers() {
+    if (profileOf(uid())?.handle !== 'aneesh') fail('Only admins can see this', '42501')
+    const mine = id => db.recs.filter(r => r.owner_id === id)
+    return later(db.profiles.map(p => {
+      const own = mine(p.id), sent = db.recs.filter(r => r.sender_id === p.id)
+      const t = own.flatMap(r => [r.created_at, r.decided_at]).concat(sent.map(r => r.created_at), p.created_at).filter(Boolean).sort().at(-1)
+      return { id: p.id, handle: p.handle, name: p.name, avatar_url: p.avatar_url, bio: p.bio, inbox: p.inbox,
+        design: p.theme?.fork ? 'fork' : p.theme?.design ?? p.theme?.preset ?? 'default', created_at: p.created_at,
+        email: db.users.find(u => u.id === p.id)?.email ?? null, last_sign_in_at: null,
+        received: own.filter(r => !r.manual).length, added: own.filter(r => r.manual).length,
+        tried: own.filter(r => ['tried', 'already_done'].includes(r.status)).length,
+        on_list: own.filter(r => ['new', 'up_next'].includes(r.status) && r.on_list && !r.hidden).length, sent: sent.length, last_active: t }
+    }).sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '')))
+  },
+
   // ---------- v2
   async listsOf(ownerId) { return later((db.lists ?? []).filter(l => l.owner_id === ownerId).sort((a, b) => a.position - b.position)) },
   async saveList(list) {

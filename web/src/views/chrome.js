@@ -12,6 +12,7 @@ export function bar(session, active) {
     ${link('/inbox', 'Inbox', 'inbox', session.newCount ? `<span class="count" aria-label="${session.newCount} new">${session.newCount}</span>` : '')}
     ${link('/sent', 'Sent', 'sent')}
     ${link('/settings', 'Settings', 'settings')}
+    ${session.isAdmin ? link('/admin', 'Admin', 'admin') : ''}
   </nav>
   ${p ? `<a href="${href('/settings/profile')}" data-link aria-label="Your profile (${esc(p.name)})">${avatar(p)}</a>` : ''}
 </div></header>`

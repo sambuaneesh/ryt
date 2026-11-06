@@ -43,8 +43,10 @@ npm run build      # dist/ for GitHub Pages (the app, plus the page code at dist
 ## Run your own copy of the whole site
 
 1. **Supabase** (the free plan is enough; a shared project is fine):
-   - SQL Editor: run the files in [`supabase/migrations/`](supabase/migrations/) in order (0001 to 0004). They only
+   - SQL Editor: run the files in [`supabase/migrations/`](supabase/migrations/) in order (0001 to 0005). They only
      add `ryt_*` tables, a view and functions, and are safe to run twice.
+   - Optional, for the `/admin` screen (everyone with a page, only for you): after signing up,
+     run `insert into public.ryt_admins (user_id) select id from public.ryt_profiles where handle = '<you>';`
    - Authentication → Providers: turn on **Google**.
    - Authentication → URL Configuration → Redirect URLs: add `http://localhost:4000/**` and
      `https://<you>.github.io/<repo>/**`.

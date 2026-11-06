@@ -173,4 +173,13 @@ export const api = {
   async mySent() {
     return must(await sb.rpc('ryt_my_sent'))
   },
+
+  // ---------- admin (migration 0005; the database refuses anyone not in ryt_admins)
+  async isAdmin() {
+    const { data, error } = await sb.rpc('ryt_is_admin')
+    return !error && data === true
+  },
+  async adminUsers() {
+    return must(await sb.rpc('ryt_admin_users'))
+  },
 }

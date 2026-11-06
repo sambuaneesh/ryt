@@ -15,10 +15,11 @@ const views = {
   missing: () => import('./views/missing.js'),
   share: () => import('./views/share.js'),
   thing: () => import('./views/thing.js'),
+  admin: () => import('./views/admin.js'),
 }
 
 const root = document.getElementById('app')
-export const session = { user: null, profile: null, newCount: 0 }
+export const session = { user: null, profile: null, newCount: 0, isAdmin: false }
 
 // path (without the site's base) -> [view, params, needs]
 function match(path) {
@@ -30,6 +31,7 @@ function match(path) {
   if (p === '/thing') return ['thing', {}]
   if (p === '/inbox') return ['inbox', {}, 'profile']
   if (p === '/sent') return ['sent', {}, 'profile']
+  if (p === '/admin') return ['admin', {}, 'profile']
   if ((m = /^\/settings(?:\/(profile|design|page|appearance|inbox|fork))?$/.exec(p))) return ['settings', { tab: m[1] ?? 'design' }, 'profile']
   if ((m = /^\/@([a-z0-9_]{2,24})(\/send)?$/i.exec(p))) return ['page', { handle: m[1].toLowerCase(), send: Boolean(m[2]) }]
   return ['missing', {}]
@@ -73,6 +75,7 @@ export function go(path, { replace = false } = {}) {
 export async function refresh() {
   session.user = await api.user()
   session.profile = session.user ? await api.me().catch(() => null) : null
+  session.isAdmin = session.profile ? await api.isAdmin?.().catch(() => false) ?? false : false
   await countNew()
 }
 
