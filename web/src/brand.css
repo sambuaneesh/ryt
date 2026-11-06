@@ -77,12 +77,21 @@ h2.section .faint { font-weight: 400; text-transform: none; letter-spacing: 0; c
 .main { max-width: 1040px; margin: 0 auto; padding: 34px 22px 120px; }
 .main.narrow { max-width: 660px; }
 .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin: 4px 0 24px; }
+/* the short name (RYT) replaces the full one on small screens */
+.wordmark .ransom.short { display: none; font-size: 17px; }
 @media (max-width: 700px) {
   .bar-in { gap: 6px; padding: 10px 12px; }
-  .bar .wordmark .r2, .bar .wordmark .r3 { display: none; }
-  .bar nav a { padding: 7px 7px; font-size: 11px; letter-spacing: 0; }
+  .wordmark .ransom.full { display: none; }
+  .wordmark .ransom.short { display: inline-flex; gap: 2px; }
+  .bar nav { gap: 2px; }
+  .bar nav a { padding: 7px 8px; font-size: 11px; letter-spacing: 0; }
   .bar nav .hide-sm { display: none; }
   .bar nav .show-sm { display: inline; }
+  .bar .avatar { --size: 30px; }
+}
+@media (max-width: 360px) {
+  .bar-in { padding: 10px 8px; }
+  .bar nav a { padding: 6px 6px; font-size: 10.5px; }
 }
 
 /* ---------------- avatars ---------------- */
@@ -377,3 +386,31 @@ dialog.sheet.wide iframe { width: 100%; height: 100%; border: 0; background: #ff
 @keyframes pop-in { 0% { opacity: 0; transform: scale(.5) rotate(8deg) translateY(40px); } 100% { opacity: 1; transform: none; } }
 @keyframes slam { 0% { opacity: 0; transform: scale(2.6) rotate(-30deg); } 100% { opacity: 1; transform: rotate(-12deg); } }
 @keyframes burst { 0% { opacity: 1; transform: translate(0, 0) rotate(0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--x), var(--y)) rotate(var(--r)); } }
+
+/* ---------------- phones ---------------- */
+@media (max-width: 700px) {
+  .main { padding: 24px 16px 130px; }
+  .head { gap: 14px; margin-bottom: 18px; }
+  .title { font-size: 2.1rem; }
+  /* rows of tabs wrap instead of hiding past the edge */
+  .segmented { flex-wrap: wrap; overflow: visible; }
+  .toolbar { margin-bottom: 14px; }
+  .rec { gap: 12px; }
+  .rec-actions { gap: 6px; }
+  .obj { --tilt: 0deg !important; }
+  .split { gap: 20px; }
+  .group > .row { padding: 12px 14px; flex-wrap: wrap; }
+  .row input[type=range] { width: 100%; }
+  .row select { max-width: 100%; }
+  .row > .segmented { width: 100%; }
+  .sheet-body { padding: 20px 16px; }
+  .front-hero .ransom { font-size: clamp(2.2rem, 13vw, 3.4rem); }
+  /* the floating button gets small: your avatar and "Page" */
+  .to-page { padding: 4px 13px 4px 4px; font-size: 13px; }
+  .to-page .avatar { --size: 28px; }
+  .to-page .long { display: none; }
+}
+.to-page .short { display: none; }
+@media (max-width: 700px) { .to-page .short { display: inline; } }
+code { overflow-wrap: anywhere; }
+@media (max-width: 700px) { .swatches { grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 12px 8px; padding: 14px; } .swatches input[type=color] { width: 38px; height: 38px; } }

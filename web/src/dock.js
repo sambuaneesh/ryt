@@ -33,7 +33,9 @@ a, button { all: unset; cursor: pointer; display: inline-flex; align-items: cent
 .menu a:hover, .menu button:hover { background: color-mix(in srgb, var(--fg) 8%, transparent); }
 .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 6px; }
 .menu .n { margin-left: auto; color: var(--muted); }
-@media (max-width: 420px) { .me .name { display: none; } }`
+@media (max-width: 420px) { .me .name { display: none; } }
+.s { display: none; }
+@media (max-width: 420px) { .l { display: none; } .s { display: inline; } }`
 
 // Readable text on the accent: whichever of white/near-black contrasts more.
 const onAccent = color => {
@@ -50,10 +52,10 @@ export function dock(root, { session, profile, theme, own, sending, go, refresh 
   const dark = Object.keys(theme.dark ?? {}).length ? palette({ ...theme.tokens, ...theme.dark }) : null
   const me = session.profile
   const primary = sending
-    ? `<a class="primary" href="${href(`/@${profile.handle}`)}" data-go>Back to the page</a>`
+    ? `<a class="primary" href="${href(`/@${profile.handle}`)}" data-go><span class="l">Back to the page</span><span class="s">Back</span></a>`
     : own
       ? `<a class="primary" href="${href('/settings/design')}" data-go>Change look</a>`
-      : `<a class="primary" href="${href(`/@${profile.handle}/send`)}" data-go>Recommend something</a>`
+      : `<a class="primary" href="${href(`/@${profile.handle}/send`)}" data-go><span class="l">Recommend something</span><span class="s">Recommend</span></a>`
   shadow.innerHTML = `<style>${css(palette(theme.tokens), dark)}</style>
 <div class="dock" role="toolbar" aria-label="RYT">
   <a class="home" href="${href(me ? '/inbox' : '/')}" data-go aria-label="Recommend You This">${mark('')}</a>

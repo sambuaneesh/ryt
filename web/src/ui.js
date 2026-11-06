@@ -13,7 +13,9 @@ export const absolute = p => new URL(href(p), location.origin).href
 export const mark = (cls = 'mark') => `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 18.25A17 17 0 0 1 32 45.75A17 17 0 0 1 32 18.25z"/><circle cx="22" cy="32" r="17"/><circle cx="42" cy="32" r="17"/></svg>`
 // The name as a cut-out ransom note: three words, three typefaces.
 export const ransom = () => '<span class="ransom" aria-label="Recommend You This"><span class="r1" aria-hidden="true">Recommend</span><span class="r2" aria-hidden="true">you</span><span class="r3" aria-hidden="true">This</span></span>'
-export const wordmark = (to = '/') => `<a class="wordmark" href="${href(to)}" data-link>${ransom()}</a>`
+// On small screens the bar shows the short name, cut out the same way: R Y T.
+const ransomShort = '<span class="ransom short" aria-hidden="true"><span class="r1">R</span><span class="r2">y</span><span class="r3">T</span></span>'
+export const wordmark = (to = '/') => `<a class="wordmark" href="${href(to)}" data-link aria-label="Recommend You This">${ransom().replace('class="ransom"', 'class="ransom full"')}${ransomShort}</a>`
 
 export const hue = s => [...String(s ?? '')].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7) % 360
 

@@ -17,6 +17,6 @@ export function bar(session, active) {
 </div></header>`
 }
 
-const toPage = p => (p ? `<a class="to-page" href="${href(`/@${p.handle}`)}" data-link>${avatar(p)}<span>Go to my page</span></a>` : '')
+const toPage = p => (p ? `<a class="to-page" href="${href(`/@${p.handle}`)}" data-link aria-label="Go to my page">${avatar(p)}<span class="long">Go to my page</span><span class="short">Page</span></a>` : '')
 
 export const screen = (session, active, inner, { narrow = false } = {}) => `${bar(session, active)}<main class="main${narrow ? ' narrow' : ''}">${inner}</main>${toPage(session.profile)}`
