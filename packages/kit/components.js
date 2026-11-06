@@ -70,13 +70,14 @@ export function sendForm({ owner, viewer, categories, error, sent, closed, accou
 ${sent ? `<p data-ryt="notice" data-tone="success"><strong>Sent. Thank you!</strong></p>` : ''}
 ${error ? `<p data-ryt="notice" data-tone="error">${esc(error)}</p>` : ''}
 <form data-ryt="send-form" method="post">
+  ${field('Link', `<input name="url" type="url" inputmode="url" placeholder="Paste a link (YouTube, Spotify, Maps…)" value="${esc(values.url)}">`, '(optional, fills in the rest)')}
+  <p data-ryt="autofill" aria-live="polite"></p>
   ${field('What should I try?', `<input name="title" required maxlength="200" value="${esc(values.title)}">`)}
   ${field('Why?', `<textarea name="pitch" rows="3" maxlength="500">${esc(values.pitch)}</textarea>`, '(optional)')}
   <div data-ryt="field-row">
     ${field('Type', `<select name="category">${categories.map(c => `<option ${c === (values.category ?? 'Other') ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>`)}
-    ${field('Link', `<input name="url" type="url" placeholder="https://" value="${esc(values.url)}">`, '(optional)')}
+    ${field('Picture', `<input name="cover" type="url" placeholder="https://" value="${esc(values.cover)}">`, '(link, optional)')}
   </div>
-  ${field('Picture', `<input name="cover" type="url" placeholder="https://" value="${esc(values.cover)}">`, '(link, optional)')}
   ${viewer ? `<p data-ryt="sending-as">Sending as <strong>@${esc(viewer.handle)}</strong></p>` : field('Your name', `<input name="fromName" required maxlength="60" value="${esc(values.fromName)}">`)}
   <label data-ryt="check"><input type="checkbox" name="showName" ${values.showName === false ? '' : 'checked'}> Show my name on this page</label>
   <button type="submit" data-ryt="button">Send recommendation</button>

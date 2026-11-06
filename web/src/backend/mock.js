@@ -124,6 +124,7 @@ export const api = {
     return true
   },
   async profile(handle) { return later(db.profiles.find(p => p.handle === String(handle).toLowerCase()) ?? null) },
+  async profilesByIds(ids) { return later(db.profiles.filter(p => ids.includes(p.id)).map(({ id, handle, name, avatar_url }) => ({ id, handle, name, avatar_url }))) },
   async handleTaken(handle) { return later(db.profiles.some(p => p.handle === String(handle).toLowerCase() && p.id !== uid())) },
 
   async publicRecs(ownerId) { return later(db.recs.filter(r => r.owner_id === ownerId && isPublic(r)).sort(byDecided).map(publicRow)) },
@@ -145,6 +146,10 @@ export const api = {
     db.recs.push(r)
     save()
     return later(r)
+  },
+  async addRecs(list) {
+    for (const f of list) await api.addRec(f)
+    return list.length
   },
   async updateRec(id, patch) {
     const r = db.recs.find(x => x.id === id && x.owner_id === uid())

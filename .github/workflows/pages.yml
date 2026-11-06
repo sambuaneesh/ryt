@@ -15,6 +15,9 @@ name: Publish
 on:
   push:
     branches: [main]
+  # Every hour: refresh link previews (new pages, new ratings). Main repository only.
+  schedule:
+    - cron: '23 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -28,6 +31,8 @@ concurrency:
 
 jobs:
   build:
+    # The hourly refresh is for the main site; a fork has no pages to preview.
+    if: ${{ github.event_name != 'schedule' || !github.event.repository.fork }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +50,8 @@ jobs:
             mv dist/page site
           else
             npm run build
+            # Link previews: one small page and one picture per person (public data only).
+            node scripts/previews.mjs
             mv dist site
           fi
         env:
@@ -52,6 +59,7 @@ jobs:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
           RYT_REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

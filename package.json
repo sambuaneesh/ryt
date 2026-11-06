@@ -19,12 +19,15 @@
     "designs": "node scripts/designs/export.mjs",
     "build:page": "vite build --config apps/page/vite.config.js",
     "build": "npm run build:web && npm run build:page",
-    "page": "vite --config apps/page/vite.config.js --open /preview.html"
+    "page": "vite --config apps/page/vite.config.js --open /preview.html",
+    "previews": "node scripts/previews.mjs",
+    "preview:full": "npm run build:web && SITE_URL=http://localhost:4003/ node scripts/previews.mjs && vite preview --config web/vite.config.js --port 4003"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "vite": "^7.3.7"
   },
   "license": "MIT"

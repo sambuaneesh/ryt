@@ -162,6 +162,8 @@
   }
   [data-ryt="notice"] { margin: 0; padding: var(--ryt-gap); border-radius: var(--ryt-radius); background: var(--ryt-surface); border: var(--ryt-border-w) solid var(--ryt-border); }
   [data-ryt="notice"][data-tone="error"] { border-color: var(--ryt-rating); }
+  [data-ryt="autofill"] { margin: -6px 0 0; min-height: 1em; font-size: .85rem; color: var(--ryt-muted); }
+  [data-ryt="autofill"]:empty { display: none; }
   [data-ryt="page"] { padding-bottom: 96px; } /* room for the RYT dock */
 }
 

@@ -419,3 +419,15 @@ code { overflow-wrap: anywhere; }
 html, body { overflow-x: clip; }
 .obj-title, .obj-from, .rec-pitch, .rec-review, .rec-meta, .sent-item .what, .row .label, .notice, .empty, .lede { overflow-wrap: anywhere; }
 .rec, .rec-side, .rec-more, .obj { min-width: 0; max-width: 100%; }
+.hint:empty { display: none; }
+
+/* ---------------- share ---------------- */
+.people { display: grid; gap: 8px; margin-bottom: 18px; }
+.person { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; border: 2px solid var(--ink); border-radius: 12px; background: var(--sheet);
+  font: 500 16px/1.2 var(--grot); text-align: left; cursor: pointer; transition: transform .08s, box-shadow .08s; }
+.person:hover { transform: translate(-2px, -2px); box-shadow: 3px 3px 0 var(--ink); }
+.person small { margin-left: auto; color: var(--ink-3); font: 400 13px/1 var(--mono); }
+.find-person { display: flex; align-items: center; gap: 8px; }
+.find-person span { font: 700 18px/1 var(--mono); }
+.find-person input { flex: 1; min-width: 0; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 10px; background: var(--sheet); font: 400 16px/1 var(--mono); outline: none; }
+.find-person input:focus { box-shadow: 4px 4px 0 var(--blue); }

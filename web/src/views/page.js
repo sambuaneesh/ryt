@@ -10,6 +10,7 @@ import { dock } from '../dock.js'
 import { esc, friendly, href, wordmark } from '../ui.js'
 import { forkFrame, forkUrlOk } from '../fork.js'
 import { celebrate } from '../celebrate.js'
+import { bindAutofill } from '../unfurl.js'
 
 export async function show(root, { params, session, go, refresh }) {
   const profile = await api.profile(params.handle)
@@ -38,7 +39,10 @@ export async function show(root, { params, session, go, refresh }) {
       return drawPage(root.querySelector('[data-frame]'))
     }
   } else if (params.send) {
-    drawSend(frame)
+    // Arriving from "Share → RYT" or "Recommend back": the link (and what we know) is filled in.
+    const q = new URLSearchParams(location.search)
+    const kind = q.get('kind')
+    drawSend(frame, { values: { url: q.get('url') ?? '', title: q.get('title') ?? '', cover: q.get('cover') ?? '', category: kind ? kind[0].toUpperCase() + kind.slice(1) : undefined } })
   } else {
     drawPage(frame)
   }
@@ -66,6 +70,9 @@ export async function show(root, { params, session, go, refresh }) {
       onReady: doc => {
         const form = doc.querySelector('[data-ryt="send-form"]')
         if (!form) return
+        // Paste a link, the rest fills in. The form's type options are "Watch", "Read"…
+        bindAutofill({ link: form.url, title: form.title, kind: form.category, cover: form.cover, status: doc.querySelector('[data-ryt="autofill"]') },
+          k => k[0].toUpperCase() + k.slice(1))
         form.addEventListener('submit', async e => {
           e.preventDefault()
           const f = Object.fromEntries(new FormData(form))

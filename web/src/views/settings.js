@@ -15,6 +15,7 @@ import { esc, href, absolute, toast, friendly, sheet, debounce, safeImage, avata
 // The repository and its fork guide (set when published from GitHub).
 const REPO = import.meta.env.RYT_REPO_URL ?? ''
 const GUIDE = REPO ? `${REPO}/blob/main/FORKING.md` : ''
+const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true
 const TABS = [['design', 'Look'], ['appearance', 'Customize'], ['profile', 'Profile'], ['inbox', 'Privacy'], ['fork', 'Advanced']]
 // A design's font stack, as a person would name it: its first real family, or "System".
 const fontName = stack => stack.split(',').map(f => f.trim().replace(/["']/g, '')).find(f => !/^(-apple-system|system-ui|blinkmacsystemfont|ui-[\w-]+|sans-serif|serif|monospace|segoe ui|roboto|helvetica( neue)?|arial)$/i.test(f)) ?? 'System font'
@@ -191,6 +192,8 @@ export async function show(root, ctx) {
   <label class="field"><span>Picture <small>link to an image</small></span><input name="avatar_url" type="url" value="${esc(me.avatar_url)}" placeholder="https://…"></label>
   <button class="btn primary">Save</button>
 </form>
+${installed() ? '' : `<div class="group" style="margin-top:22px"><div class="row"><span class="label"><span>Install the app</span><small>${/iphone|ipad/i.test(navigator.userAgent) ? 'In Safari: tap Share, then “Add to Home Screen”.' : 'Opens like an app. On Android, also lets you share links to RYT from other apps.'}</small></span>${/iphone|ipad/i.test(navigator.userAgent) ? '' : '<button class="btn sm" data-install>Install</button>'}</div></div>`}
+<div class="group" style="margin-top:22px"><div class="row"><span class="label"><span>Import recommendations</span><small>From a CSV or JSON file, like an export of the old recommend-me site.</small></span><label class="btn sm">Choose file<input type="file" accept=".csv,.json,text/csv,application/json" data-import hidden></label></div></div>
 <div class="group" style="margin-top:22px"><div class="row"><span class="label"><span>Signed in with Google</span><small>${esc(session.user?.email ?? '')}</small></span><button class="btn sm" data-out>Sign out</button></div>
   <div class="row"><span class="label"><span>Delete my page</span><small>Deletes your page and your inbox. This cannot be undone.</small></span><button class="btn sm danger" data-delete>Delete</button></div></div>`)
     const form = root.querySelector('[data-form]')
@@ -203,6 +206,38 @@ export async function show(root, ctx) {
         Object.assign(me, await api.updateProfile({ name: f.name.trim(), handle: f.handle.trim(), bio: f.bio.trim(), avatar_url: f.avatar_url.trim() || null }))
         toast('Saved')
         profileTab()
+      } catch (err) {
+        toast(friendly(err), { bad: true })
+      }
+    })
+    root.querySelector('[data-install]')?.addEventListener('click', async () => {
+      const { install } = await import('../main.js')
+      if (!install.prompt) return toast('Use your browser menu: “Install app” or “Add to Home screen”')
+      install.prompt.prompt()
+      const { outcome } = await install.prompt.userChoice
+      install.prompt = null
+      if (outcome === 'accepted') profileTab()
+    })
+    root.querySelector('[data-import]').addEventListener('change', async e => {
+      const file = e.target.files[0]
+      e.target.value = ''
+      if (!file) return
+      const { readRows, mapRow } = await import('../importer.js')
+      let rows
+      try {
+        rows = readRows(await file.text()).map(mapRow).filter(Boolean)
+      } catch {
+        return toast('Could not read that file', { bad: true })
+      }
+      // Skip what's already in your inbox, so importing twice is safe.
+      const have = new Set((await api.inbox()).map(r => r.title.trim().toLowerCase()))
+      const fresh = rows.filter(r => !have.has(r.title.toLowerCase()))
+      if (!fresh.length) return toast(rows.length ? 'Everything in that file is already in your inbox' : 'No recommendations found in that file', { bad: !rows.length })
+      const tried = fresh.filter(r => r.status === 'tried' || r.status === 'already_done').length
+      if (!confirm(`Import ${fresh.length} recommendation${fresh.length === 1 ? '' : 's'}${tried ? ` (${tried} already tried, shown on your page)` : ''}?`)) return
+      try {
+        const n = await api.addRecs(fresh)
+        toast(`Imported ${n}`)
       } catch (err) {
         toast(friendly(err), { bad: true })
       }

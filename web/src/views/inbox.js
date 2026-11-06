@@ -4,8 +4,9 @@
 
 import { api } from '../backend/index.js'
 import { screen } from './chrome.js'
-import { esc, absolute, toast, friendly, sheet, debounce, safeImage, timeAgo, CATEGORIES, STATUS } from '../ui.js'
+import { esc, href, absolute, toast, friendly, sheet, debounce, safeImage, timeAgo, CATEGORIES, STATUS } from '../ui.js'
 import { objectCard } from '../objects.js'
+import { bindAutofill } from '../unfurl.js'
 
 const TABS = [['new', 'New'], ['up_next', 'To try'], ['done', 'Tried'], ['passed', 'Skipped'], ['all', 'All']]
 const inTab = (r, tab) => tab === 'all' || (tab === 'done' ? r.status === 'tried' || r.status === 'already_done' : r.status === tab)
@@ -17,6 +18,8 @@ export async function show(root, ctx) {
   const { session } = ctx
   const recs = await api.inbox()
   const open = new Set()
+  // People who recommended you things with their account: so you can recommend something back.
+  const senders = new Map((await api.profilesByIds([...new Set(recs.map(r => r.sender_id).filter(id => id && id !== session.profile.id))]).catch(() => [])).map(p => [p.id, p]))
   tab ??= recs.some(r => r.status === 'new') ? 'new' : recs.some(r => r.status === 'up_next') ? 'up_next' : 'all'
   const link = absolute(`/@${session.profile.handle}`)
 
@@ -54,6 +57,9 @@ export async function show(root, ctx) {
     if (r.status === 'up_next') return b('tried', 'I tried it', 'primary') + b('already_done', 'Already tried') + b('passed', 'Skip', 'ghost')
     if (r.status === 'passed') return b('up_next', 'Move to To try')
     if (r.status === 'tried' && !r.rating && !open.has(r.id)) return '<button class="btn sm primary" data-more>Rate it</button>'
+    // Tried it: one tap to return the favour.
+    const sender = senders.get(r.sender_id)
+    if (PUBLIC(r.status) && sender) return `<a class="btn sm" href="${href(`/@${sender.handle}/send`)}" data-link>Recommend ${esc(sender.name.split(' ')[0])} something back</a>`
     return ''
   }
 
@@ -149,11 +155,10 @@ export async function show(root, ctx) {
   function editor(r) {
     const d = sheet(`<form class="sheet-body" method="dialog" data-form>
   <h2 class="title" style="font-size:1.8rem;margin-bottom:20px">${r ? 'Edit' : 'Add something to try'}</h2>
+  <label class="field"><span>Link <small>optional, fills in the rest</small></span><input name="link" type="url" inputmode="url" value="${esc(r?.link)}" placeholder="Paste a link (YouTube, Spotify, Maps…)"></label>
+  <p class="hint" data-autofill aria-live="polite"></p>
   <label class="field"><span>Name</span><input name="title" required maxlength="120" value="${esc(r?.title)}"></label>
-  <div class="grid2">
-    <label class="field"><span>Type</span><select name="category">${CATEGORIES.map(c => `<option value="${c.toLowerCase()}" ${c.toLowerCase() === (r?.category ?? 'other') ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
-    <label class="field"><span>Link <small>optional</small></span><input name="link" type="url" value="${esc(r?.link)}" placeholder="https://"></label>
-  </div>
+  <label class="field"><span>Type</span><select name="category">${CATEGORIES.map(c => `<option value="${c.toLowerCase()}" ${c.toLowerCase() === (r?.category ?? 'other') ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
   <label class="field"><span>Picture <small>link to an image, optional</small></span><input name="cover_url" type="url" value="${esc(r?.cover_url)}" placeholder="https://"></label>
   <label class="field"><span>Tags <small>separate with commas</small></span><input name="tags" value="${esc((r?.tags ?? []).join(', '))}"></label>
   ${r ? '' : '<label class="field"><span>Who recommended it? <small>optional</small></span><input name="sender_name" maxlength="60"></label>'}
@@ -161,6 +166,7 @@ export async function show(root, ctx) {
 </form>`)
     const form = d.querySelector('[data-form]')
     d.querySelector('[data-cancel]').onclick = () => d.close()
+    if (!r) bindAutofill({ link: form.link, title: form.title, kind: form.category, cover: form.cover_url, status: d.querySelector('[data-autofill]') })
     form.addEventListener('submit', async e => {
       e.preventDefault()
       const f = Object.fromEntries(new FormData(form))

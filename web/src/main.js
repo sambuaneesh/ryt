@@ -13,6 +13,7 @@ const views = {
   settings: () => import('./views/settings.js'),
   page: () => import('./views/page.js'),
   missing: () => import('./views/missing.js'),
+  share: () => import('./views/share.js'),
 }
 
 const root = document.getElementById('app')
@@ -24,6 +25,7 @@ function match(path) {
   let m
   if (p === '/') return ['landing', {}]
   if (p === '/welcome') return ['welcome', {}, 'user']
+  if (p === '/share') return ['share', {}]
   if (p === '/inbox') return ['inbox', {}, 'profile']
   if (p === '/sent') return ['sent', {}, 'profile']
   if ((m = /^\/settings(?:\/(profile|design|appearance|inbox|fork))?$/.exec(p))) return ['settings', { tab: m[1] ?? 'design' }, 'profile']
@@ -108,3 +110,11 @@ api.onAuth(async (user, event) => {
   show()
 })
 show()
+
+// Installable app: register the service worker (the browser then offers "Install"), and keep
+// the browser's install prompt for the "Install app" button in Settings.
+export const install = { prompt: null }
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); install.prompt = e })
+if ('serviceWorker' in navigator && !import.meta.env.DEV) {
+  navigator.serviceWorker.register(href('/sw.js'), { scope: BASE }).catch(() => {})
+}

@@ -67,6 +67,11 @@ export const api = {
   async profile(handle) {
     return must(await sb.from('ryt_profiles').select('*').eq('handle', String(handle).toLowerCase()).maybeSingle())
   },
+  // Page names for account ids (to link back to people who recommended you something).
+  async profilesByIds(ids) {
+    if (!ids.length) return []
+    return must(await sb.from('ryt_profiles').select('id, handle, name, avatar_url').in('id', ids))
+  },
   async handleTaken(handle) {
     const row = must(await sb.from('ryt_profiles').select('id').eq('handle', String(handle).toLowerCase()).maybeSingle())
     return Boolean(row && row.id !== currentUser?.id)
@@ -88,6 +93,15 @@ export const api = {
   },
   async addRec(fields) {
     return must(await sb.from('ryt_recs').insert({ ...fields, owner_id: currentUser.id, manual: true }).select().single())
+  },
+  // Many at once (imports), in chunks.
+  async addRecs(list) {
+    let added = 0
+    for (let i = 0; i < list.length; i += 200) {
+      const rows = list.slice(i, i + 200).map(f => ({ ...f, owner_id: currentUser.id, manual: true }))
+      added += must(await sb.from('ryt_recs').insert(rows).select('id')).length
+    }
+    return added
   },
   async updateRec(id, patch) {
     return must(await sb.from('ryt_recs').update(patch).eq('id', id).select().single())
