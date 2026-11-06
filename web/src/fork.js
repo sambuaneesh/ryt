@@ -13,7 +13,7 @@ import { BASE } from './ui.js'
 export const forkUrlOk = url => /^https:\/\/[^\s"'<>]+$/.test(url ?? '') || (import.meta.env.DEV && /^http:\/\/localhost:\d+\//.test(url ?? ''))
 
 // Resolves true once the fork has drawn the page, false if it fails or stays silent.
-export function forkFrame(frame, url, { data, theme, navigate, timeout = 6000 }) {
+export function forkFrame(frame, url, { data, theme, navigate, actions = {}, timeout = 6000 }) {
   return new Promise(resolve => {
     let done = false
     const finish = ok => {
@@ -29,6 +29,11 @@ export function forkFrame(frame, url, { data, theme, navigate, timeout = 6000 })
       if (m.type === 'ryt:hello') {
         if (!SUPPORTED_CONTRACTS.includes(m.contract)) return finish(false)
         frame.contentWindow.postMessage({ type: 'ryt:render', data, theme: JSON.parse(JSON.stringify(theme)) }, '*')
+      } else if (m.type === 'ryt:action') {
+        // Only the actions we offer, with plain arguments; the answer goes back to the frame.
+        const fn = { react: actions.react, alsoTried: actions.alsoTried }[m.name]
+        Promise.resolve(fn ? fn(...(Array.isArray(m.args) ? m.args : [])) : null).catch(() => null)
+          .then(result => frame.contentWindow?.postMessage({ type: 'ryt:action-result', id: m.id, result }, '*'))
       } else if (m.type === 'ryt:ready') finish(true)
       else if (m.type === 'ryt:error') finish(false)
       else if (m.type === 'ryt:navigate') {

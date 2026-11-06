@@ -31,7 +31,7 @@ export function render({ data, theme, onFallback, body }) {
   const attrs = {
     layout: t.layout, density: t.density, shadow: t.shadow,
     header: t['header.style'], 'header-align': t['header.align'], card: t['card.style'], cover: t['card.cover'], chip: t['chip.style'],
-    frame: t.frame, hero: t['hero.style'], avatar: t['hero.avatar'],
+    frame: t.frame, hero: t['hero.style'], avatar: t['hero.avatar'], objects: t['card.objects'],
   }
   const open = `<div data-ryt="page" ${Object.entries(attrs).map(([k, v]) => `data-${k}="${esc(v)}"`).join(' ')}>`
   const footer = `<footer data-ryt="footer">${esc(data.owner.name)}’s recommendations · on <a href="${esc(data.links.home ?? '/')}">Recommend You This</a></footer>`

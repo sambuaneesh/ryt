@@ -47,7 +47,9 @@ const has = (s, re) => re.test(String(s ?? '').toLowerCase())
 function kindOf(r, tags) {
   const text = `${r.title ?? ''} ${r.raw_input ?? ''} ${tags.join(' ')}`.toLowerCase()
   const cat = String(r.category ?? '').toLowerCase()
-  if (['watch', 'read', 'listen', 'play', 'eat', 'go', 'use', 'other'].includes(cat)) return cat
+  if (['watch', 'read', 'listen', 'play', 'eat', 'go', 'use'].includes(cat)) return cat
+  // A video link is something to watch, whatever the old category said.
+  if (/youtube\.com|youtu\.be|vimeo\.com/.test(text)) return 'watch'
   if (/gaming|game/.test(cat)) return 'play'
   if (/food/.test(cat)) return 'eat'
   if (/tech|tool/.test(cat)) return 'use'
@@ -74,6 +76,7 @@ export function mapRow(r) {
   if (!r || typeof r !== 'object') return null
   const raw = clip(r.raw_input ?? r.pitch, 2000)
   const title = clip(r.title, 120) || clip(raw.split(/\n|\. /)[0], 120)
+  const linkInText = /https?:\/\/[^\s<>"']+/.exec(raw)?.[0] ?? null
   if (!title) return null
   const tags = tagsOf(r.tags).map(t => clip(t, 24).toLowerCase()).filter(Boolean).slice(0, 8)
   const status = { completed: 'tried', tried: 'tried', already_done: 'already_done', pending: 'new', new: 'new', up_next: 'up_next', passed: 'passed' }[String(r.status ?? '').trim()] ?? 'new'
@@ -83,14 +86,15 @@ export function mapRow(r) {
   return {
     title,
     category: kindOf(r, tags),
-    pitch: raw && raw !== title ? clip(raw, 500) : '',
+    // Not a "why" if it only repeats the title or is a bare label ("Song 2:").
+    pitch: raw && raw.toLowerCase() !== title.toLowerCase() && !/^[\w\s]{1,14}:$/.test(raw) ? clip(raw, 500) : '',
     tags,
     sender_name: clip(r.submitted_by ?? r.sender_name, 60),
     show_sender: true,
     status,
     rating: status === 'tried' && rating >= 1 && rating <= 10 ? rating : null,
     review: clip(r.admin_comment ?? r.review, 1000),
-    link: /^https?:\/\//.test(r.link ?? '') ? clip(r.link, 2000) : (/^https?:\/\/\S+$/.test(raw) ? raw : null),
+    link: /^https?:\/\//.test(r.link ?? '') ? clip(r.link, 2000) : linkInText ? clip(linkInText, 2000) : null,
     created_at: created,
     decided_at: decided ? created : null,
   }

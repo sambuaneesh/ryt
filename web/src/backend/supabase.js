@@ -120,6 +120,56 @@ export const api = {
       p_pitch: f.pitch ?? '', p_sender_name: f.fromName ?? '', p_show_sender: f.showName !== false,
     }))
   },
+  // ---------- v2: lists, requests, reactions, things (needs migration 0003)
+  async profilesByHandles(handles) {
+    if (!handles.length) return []
+    return must(await sb.from('ryt_profiles').select('id, handle, name, avatar_url').in('handle', handles))
+  },
+  async listsOf(ownerId) {
+    return must(await sb.from('ryt_lists').select('*').eq('owner_id', ownerId).order('position').order('created_at'))
+  },
+  async saveList(list) {
+    const row = { title: list.title, description: list.description ?? '', items: list.items ?? [], position: list.position ?? 0 }
+    if (list.id) return must(await sb.from('ryt_lists').update(row).eq('id', list.id).select().single())
+    return must(await sb.from('ryt_lists').insert({ ...row, owner_id: currentUser.id }).select().single())
+  },
+  async deleteList(id) {
+    must(await sb.from('ryt_lists').delete().eq('id', id))
+  },
+  async asksOf(ownerId, { all = false } = {}) {
+    let q = sb.from('ryt_asks').select('*').eq('owner_id', ownerId).order('created_at', { ascending: false })
+    if (!all) q = q.eq('open', true)
+    return must(await q)
+  },
+  async saveAsk(ask) {
+    if (ask.id) return must(await sb.from('ryt_asks').update({ text: ask.text, open: ask.open }).eq('id', ask.id).select().single())
+    return must(await sb.from('ryt_asks').insert({ text: ask.text, owner_id: currentUser.id }).select().single())
+  },
+  async deleteAsk(id) {
+    must(await sb.from('ryt_asks').delete().eq('id', id))
+  },
+  async ask(id) {
+    return must(await sb.from('ryt_asks').select('*').eq('id', id).maybeSingle())
+  },
+  async answer(askId, f) {
+    return must(await sb.rpc('ryt_answer', {
+      p_ask: askId, p_title: f.title, p_category: f.category, p_link: f.link || null, p_cover_url: f.cover || null,
+      p_pitch: f.pitch ?? '', p_sender_name: f.fromName ?? '', p_show_sender: f.showName !== false,
+    }))
+  },
+  async react(recId, emoji, delta) {
+    return must(await sb.rpc('ryt_react', { p_rec: recId, p_emoji: emoji, p_delta: delta }))
+  },
+  // Everyone whose page shows this thing (same title, any case), newest verdicts first.
+  async thing(title) {
+    const t = String(title).trim().replace(/[%_\\]/g, m => `\\${m}`)
+    return must(await sb.from('ryt_public_recs').select('*').ilike('title', t).order('decided_at', { ascending: false, nullsFirst: false }).limit(200))
+  },
+  // Well-loved things on these pages (for "Surprise me").
+  async lovedOn(handles) {
+    if (!handles.length) return []
+    return must(await sb.from('ryt_public_recs').select('id, title, category, rating, owner_handle').in('owner_handle', handles).gte('rating', 8).limit(300))
+  },
   async mySent() {
     return must(await sb.rpc('ryt_my_sent'))
   },

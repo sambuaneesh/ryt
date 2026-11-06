@@ -4,10 +4,10 @@
 
 import { api } from '../backend/index.js'
 import { screen } from './chrome.js'
-import { TOKEN_SCHEMA, SETTING_SCHEMA, FONTS, isValid } from '../../../packages/kit/index.js'
+import { TOKEN_SCHEMA, SETTING_SCHEMA, FONTS, SECTIONS, SECTION_HINTS, isValid } from '../../../packages/kit/index.js'
 import { PRESETS, PRESET_ORDER, design, themeFor } from '../designs.js'
 import { mountGallery } from '../gallery.js'
-import { pageData, pageDocument, mountPage } from '../page.js'
+import { pageData, loadPage, pageDocument, mountPage } from '../page.js'
 import { forkFrame, forkUrlOk } from '../fork.js'
 import { SAMPLE_RECS } from '../sample.js'
 import { esc, href, absolute, toast, friendly, sheet, debounce, safeImage, avatar, mark } from '../ui.js'
@@ -16,7 +16,7 @@ import { esc, href, absolute, toast, friendly, sheet, debounce, safeImage, avata
 const REPO = import.meta.env.RYT_REPO_URL ?? ''
 const GUIDE = REPO ? `${REPO}/blob/main/FORKING.md` : ''
 const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true
-const TABS = [['design', 'Look'], ['appearance', 'Customize'], ['profile', 'Profile'], ['inbox', 'Privacy'], ['fork', 'Advanced']]
+const TABS = [['design', 'Look'], ['page', 'Page'], ['appearance', 'Customize'], ['profile', 'Profile'], ['inbox', 'Privacy'], ['fork', 'Advanced']]
 // A design's font stack, as a person would name it: its first real family, or "System".
 const fontName = stack => stack.split(',').map(f => f.trim().replace(/["']/g, '')).find(f => !/^(-apple-system|system-ui|blinkmacsystemfont|ui-[\w-]+|sans-serif|serif|monospace|segoe ui|roboto|helvetica( neue)?|arial)$/i.test(f)) ?? 'System font'
 
@@ -24,8 +24,11 @@ export async function show(root, ctx) {
   const { session, params, go, refresh } = ctx
   const me = session.profile
   const setting = () => me.theme ?? {}
-  const [recs, sent] = await Promise.all([api.publicRecs(me.id), api.sentBy(me.handle)])
+  const full = await loadPage(api, me)
+  const { recs, sent } = full
   const previewRecs = recs.length ? recs : SAMPLE_RECS
+  let lists = (await api.listsOf?.(me.id).catch(() => [])) ?? []
+  let asks = (await api.asksOf?.(me.id, { all: true }).catch(() => [])) ?? []
   let loaded = setting().design ? await design(setting().design) : null
 
   const saveTheme = async (theme, message) => {
@@ -39,7 +42,11 @@ export async function show(root, ctx) {
   }
 
   // ---------- live preview of your own page
-  const previewHtml = (s = setting(), d = loaded) => pageDocument({ data: pageData(me, previewRecs, sent), theme: themeFor(s, d) })
+  // The page as it will look with these settings (s): your real lists, requests and circle.
+  const previewHtml = (s = setting(), d = loaded) => pageDocument({
+    data: pageData({ ...me, theme: s }, previewRecs, sent, { lists, asks: asks.filter(a => a.open), circle: full.data.circle }),
+    theme: themeFor(s, d),
+  })
   const drawPreview = (s, d) => {
     const frame = root.querySelector('[data-preview]')
     if (frame) mountPage(frame, previewHtml(s, d), { navigate: () => {} })
@@ -330,6 +337,141 @@ ${installed() ? '' : `<div class="group" style="margin-top:22px"><div class="row
   }
 
   // Last, once every helper above exists.
-  const views = { design: designTab, appearance: appearanceTab, profile: profileTab, inbox: inboxTab, fork: forkTab }
+  // ================================================================ page: blocks, note, lists, requests
+  async function pageTab() {
+    const s = setting()
+    const page = s.page ?? {}
+    const resolved = themeFor(s, loaded)
+    const on = resolved.sections.filter(id => id !== 'hero')
+    const off = Object.keys(SECTIONS).filter(id => id !== 'hero' && !on.includes(id))
+    const tok = resolved.tokens
+    const pills = (key, opts) => `<div class="segmented">${opts.map(([v, l]) => `<button type="button" aria-pressed="${tok[key] === v}" data-tok="${key}" data-v="${v}">${l}</button>`).join('')}</div>`
+    const blockRow = (id, enabled) => `<div class="block-row${enabled ? '' : ' off'}" data-block="${id}">
+    <span class="switch"><input type="checkbox" data-block-on ${enabled ? 'checked' : ''} aria-label="Show ${esc(SECTIONS[id])}"><span></span></span>
+    <div class="block-main"><input class="block-name" data-block-name value="${esc(page.labels?.[id] ?? '')}" placeholder="${esc(SECTIONS[id])}" maxlength="60" aria-label="Name for ${esc(SECTIONS[id])}"><small>${esc(SECTION_HINTS[id] ?? '')}</small></div>
+    <span class="block-move">${enabled ? '<button type="button" class="link" data-up aria-label="Move up">↑</button><button type="button" class="link" data-down aria-label="Move down">↓</button>' : ''}</span></div>`
+    const tried = previewRecs.filter(r => ['tried', 'already_done'].includes(r.status))
+    layout(`
+  <h2 class="section" style="margin-top:0">Pinned note</h2>
+  <label class="field"><textarea data-note maxlength="280" rows="2" placeholder="Taking food recommendations only this month!">${esc(page.note ?? '')}</textarea></label>
+
+  <h2 class="section">Blocks <span class="faint">turn on, reorder, rename</span></h2>
+  <div class="blocks" data-blocks>${on.map(id => blockRow(id, true)).join('')}${off.map(id => blockRow(id, false)).join('')}</div>
+
+  <h2 class="section">Style</h2>
+  <div class="group">
+    <div class="row"><span class="label"><span>Arrangement</span></span>${pills('layout', [['list', 'List'], ['grid', 'Grid'], ['magazine', 'Magazine'], ['corkboard', 'Corkboard']])}</div>
+    <div class="row"><span class="label"><span>Cards as objects</span><small>Tickets for films, receipts for food…</small></span>${pills('card.objects', [['no', 'No'], ['yes', 'Yes']])}</div>
+    <div class="row"><span class="label"><span>Pictures</span></span>${pills('card.cover', [['none', 'None'], ['top', 'On top'], ['side', 'Beside']])}</div>
+  </div>
+
+  <h2 class="section">Lists <span class="faint">collections on your page</span></h2>
+  <div class="group" data-lists>${lists.length ? lists.map(l => `<div class="row" data-list="${esc(l.id)}"><span class="label"><span>${esc(l.title)}</span><small>${l.items.length} thing${l.items.length === 1 ? '' : 's'}</small></span>
+    <span style="display:flex;gap:12px"><button class="link" data-edit-list>Edit</button><button class="link" data-del-list>Delete</button></span></div>`).join('') : '<div class="row"><span class="label"><small>No lists yet.</small></span></div>'}</div>
+  <p><button class="btn sm" data-new-list ${tried.length ? '' : 'disabled'}>New list</button></p>
+
+  <h2 class="section">Ask me <span class="faint">ask for recommendations</span></h2>
+  <form class="find-person" data-new-ask style="margin-bottom:12px"><input name="text" maxlength="200" placeholder="A thriller I can finish in one sitting?" aria-label="Your request"><button class="btn primary">Add</button></form>
+  <div class="group">${asks.length ? asks.map(a => `<div class="row" data-ask="${esc(a.id)}"><span class="label"><span>“${esc(a.text)}”</span><small>${a.open ? 'Open, on your page' : 'Closed'}</small></span>
+    <span style="display:flex;gap:12px"><button class="link" data-toggle-ask>${a.open ? 'Close' : 'Reopen'}</button><button class="link" data-del-ask>Delete</button></span></div>`).join('') : '<div class="row"><span class="label"><small>No requests yet.</small></span></div>'}</div>`, { withPreview: true })
+
+    // Saves the page settings (note, labels, block order) and the quick style tokens.
+    const pageSettings = () => {
+      const rows = [...root.querySelectorAll('[data-block]')]
+      const labels = Object.fromEntries(rows.map(r => [r.dataset.block, r.querySelector('[data-block-name]').value.trim()]).filter(([, v]) => v))
+      const sections = ['hero', ...rows.filter(r => r.querySelector('[data-block-on]').checked).map(r => r.dataset.block)]
+      const note = root.querySelector('[data-note]').value.trim()
+      return { ...setting(), page: { ...(setting().page ?? {}), note, labels }, overrides: { ...(setting().overrides ?? {}), sections } }
+    }
+    const persist = debounce(async () => {
+      const next = pageSettings()
+      drawPreview(next, loaded)
+      await saveTheme(next, 'Saved')
+    }, 500)
+    root.oninput = e => { if (e.target.matches('[data-note], [data-block-name]')) persist() }
+    root.onchange = e => {
+      const row = e.target.closest('[data-block]')
+      if (row && e.target.matches('[data-block-on]')) {
+        row.classList.toggle('off', !e.target.checked)
+        // On: joins the end of the shown blocks. Off: goes below them.
+        const box = root.querySelector('[data-blocks]')
+        const firstOff = [...box.children].find(r => r !== row && r.classList.contains('off'))
+        box.insertBefore(row, e.target.checked ? firstOff ?? null : null)
+        row.querySelector('.block-move').innerHTML = e.target.checked ? '<button type="button" class="link" data-up aria-label="Move up">↑</button><button type="button" class="link" data-down aria-label="Move down">↓</button>' : ''
+        persist()
+      }
+    }
+    root.onclick = async e => {
+      const t = e.target
+      const row = t.closest('[data-block]')
+      if (row && t.closest('[data-up]') && row.previousElementSibling) { row.parentElement.insertBefore(row, row.previousElementSibling); return persist() }
+      if (row && t.closest('[data-down]') && row.nextElementSibling && !row.nextElementSibling.classList.contains('off')) { row.parentElement.insertBefore(row.nextElementSibling, row); return persist() }
+      const tokBtn = t.closest('[data-tok]')
+      if (tokBtn) {
+        tokBtn.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === tokBtn)))
+        const next = pageSettings()
+        next.overrides = { ...next.overrides, tokens: { ...(next.overrides.tokens ?? {}), [tokBtn.dataset.tok]: tokBtn.dataset.v } }
+        drawPreview(next, loaded)
+        return saveTheme(next, 'Saved')
+      }
+      if (t.closest('[data-new-list]')) return listEditor(null)
+      const listRow = t.closest('[data-list]')
+      if (listRow && t.closest('[data-edit-list]')) return listEditor(lists.find(l => l.id === listRow.dataset.list))
+      if (listRow && t.closest('[data-del-list]')) {
+        if (!confirm('Delete this list? The recommendations in it stay.')) return
+        try { await api.deleteList(listRow.dataset.list); lists = lists.filter(l => l.id !== listRow.dataset.list); toast('Deleted'); return pageTab() } catch (err) { return toast(friendly(err), { bad: true }) }
+      }
+      const askRow = t.closest('[data-ask]')
+      if (askRow && t.closest('[data-toggle-ask]')) {
+        const a = asks.find(x => x.id === askRow.dataset.ask)
+        try { Object.assign(a, await api.saveAsk({ id: a.id, open: !a.open })); toast(a.open ? 'Reopened' : 'Closed'); return pageTab() } catch (err) { return toast(friendly(err), { bad: true }) }
+      }
+      if (askRow && t.closest('[data-del-ask]')) {
+        try { await api.deleteAsk(askRow.dataset.ask); asks = asks.filter(x => x.id !== askRow.dataset.ask); toast('Deleted'); return pageTab() } catch (err) { return toast(friendly(err), { bad: true }) }
+      }
+    }
+    root.onsubmit = async e => {
+      if (!e.target.matches('[data-new-ask]')) return
+      e.preventDefault()
+      const text = e.target.text.value.trim()
+      if (!text) return
+      try { asks.unshift(await api.saveAsk({ text })); toast('Added to your page'); pageTab() } catch (err) { toast(friendly(err), { bad: true }) }
+    }
+
+    // A list: a name, a line, and which of your tried things are in it.
+    function listEditor(list) {
+      const chosen = new Set(list?.items ?? [])
+      const d = sheet(`<form class="sheet-body" method="dialog" data-form>
+  <h2 class="title" style="font-size:1.8rem;margin-bottom:18px">${list ? 'Edit list' : 'New list'}</h2>
+  <label class="field"><span>Name</span><input name="title" required maxlength="80" value="${esc(list?.title)}" placeholder="Monsoon reading"></label>
+  <label class="field"><span>A line about it <small>optional</small></span><input name="description" maxlength="280" value="${esc(list?.description)}"></label>
+  <div class="field"><span>What’s in it</span><input class="input" type="search" placeholder="Search" data-q aria-label="Search your recommendations"></div>
+  <div class="pick-list">${tried.map(r => `<label data-title="${esc(r.title.toLowerCase())}"><input type="checkbox" value="${esc(r.id)}" ${chosen.has(r.id) ? 'checked' : ''}><span>${esc(r.title)}</span><small>${esc(r.category)}${r.rating ? ` · ${r.rating}` : ''}</small></label>`).join('')}</div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px"><button type="button" class="btn ghost" data-cancel>Cancel</button><button class="btn primary">Save</button></div>
+</form>`)
+      const form = d.querySelector('[data-form]')
+      d.querySelector('[data-cancel]').onclick = () => d.close()
+      d.querySelector('[data-q]').addEventListener('input', e => {
+        const q = e.target.value.trim().toLowerCase()
+        d.querySelectorAll('.pick-list label').forEach(l => { l.hidden = Boolean(q) && !l.dataset.title.includes(q) })
+      })
+      form.addEventListener('submit', async e => {
+        e.preventDefault()
+        const items = [...d.querySelectorAll('.pick-list input:checked')].map(i => i.value)
+        if (!items.length) return toast('Pick at least one thing', { bad: true })
+        try {
+          const saved = await api.saveList({ id: list?.id, title: form.title.value.trim(), description: form.description.value.trim(), items, position: list?.position ?? lists.length })
+          lists = list ? lists.map(l => (l.id === saved.id ? saved : l)) : [...lists, saved]
+          d.close()
+          toast('Saved')
+          pageTab()
+        } catch (err) {
+          toast(friendly(err), { bad: true })
+        }
+      })
+    }
+  }
+
+  const views = { design: designTab, page: pageTab, appearance: appearanceTab, profile: profileTab, inbox: inboxTab, fork: forkTab }
   await views[params.tab]()
 }

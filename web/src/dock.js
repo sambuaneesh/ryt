@@ -14,6 +14,10 @@ const css = (t, d) => `
 ${d ? `@media (prefers-color-scheme: dark) { .dock { --bg: ${d.surface}; --fg: ${d.text}; --muted: ${d.muted}; --line: ${d.border}; --accent: ${d.accent}; --on-accent: ${d.onAccent}; } }` : ''}
 a, button { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; }
 .home { width: 34px; height: 34px; justify-content: center; }
+.dice { width: 36px; height: 36px; justify-content: center; font-size: 19px; transition: transform .3s; }
+.dice:hover { background: color-mix(in srgb, var(--fg) 8%, transparent); transform: rotate(-20deg); }
+.dice.rolling { animation: roll .5s ease; }
+@keyframes roll { to { transform: rotate(360deg); } }
 .home svg { width: 22px; height: 22px; }
 .home circle { fill: none; stroke: var(--fg); stroke-width: 3.4; }
 .home path { fill: var(--fg); }
@@ -45,7 +49,7 @@ const onAccent = color => {
 }
 const palette = tokens => ({ surface: tokens['color.surface'], text: tokens['color.text'], muted: tokens['color.muted'], border: tokens['color.border'], accent: tokens['color.accent'], onAccent: onAccent(tokens['color.accent']) })
 
-export function dock(root, { session, profile, theme, own, sending, go, refresh }) {
+export function dock(root, { session, profile, theme, own, sending, go, refresh, surprise }) {
   const host = document.createElement('div')
   root.append(host)
   const shadow = host.attachShadow({ mode: 'open' })
@@ -62,6 +66,7 @@ export function dock(root, { session, profile, theme, own, sending, go, refresh 
   ${me
     ? `<button class="me" aria-haspopup="menu" aria-expanded="false" data-me>${avatar(me)}<span class="name">${esc(me.name.split(' ')[0])}</span></button>`
     : `<button class="ghost" data-signin>Sign in</button>`}
+  ${surprise && !sending ? '<button class="dice" data-surprise aria-label="Surprise me: something loved nearby" title="Surprise me">🎲</button>' : ''}
   ${primary}
   ${me ? `<div class="menu" role="menu" data-menu>
     <a href="${href(`/@${me.handle}`)}" data-go role="menuitem">My page</a>
@@ -78,6 +83,14 @@ export function dock(root, { session, profile, theme, own, sending, go, refresh 
     if (a) {
       e.preventDefault()
       return go(a.getAttribute('href').slice(import.meta.env.BASE_URL.length - 1))
+    }
+    if (e.target.closest('[data-surprise]')) {
+      const b = e.target.closest('[data-surprise]')
+      b.classList.add('rolling')
+      const pick = await surprise()
+      b.classList.remove('rolling')
+      if (!pick) toast('Nothing to suggest yet')
+      return
     }
     if (e.target.closest('[data-me]')) {
       const menu = shadow.querySelector('[data-menu]')

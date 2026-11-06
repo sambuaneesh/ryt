@@ -14,6 +14,7 @@ const views = {
   page: () => import('./views/page.js'),
   missing: () => import('./views/missing.js'),
   share: () => import('./views/share.js'),
+  thing: () => import('./views/thing.js'),
 }
 
 const root = document.getElementById('app')
@@ -26,9 +27,10 @@ function match(path) {
   if (p === '/') return ['landing', {}]
   if (p === '/welcome') return ['welcome', {}, 'user']
   if (p === '/share') return ['share', {}]
+  if (p === '/thing') return ['thing', {}]
   if (p === '/inbox') return ['inbox', {}, 'profile']
   if (p === '/sent') return ['sent', {}, 'profile']
-  if ((m = /^\/settings(?:\/(profile|design|appearance|inbox|fork))?$/.exec(p))) return ['settings', { tab: m[1] ?? 'design' }, 'profile']
+  if ((m = /^\/settings(?:\/(profile|design|page|appearance|inbox|fork))?$/.exec(p))) return ['settings', { tab: m[1] ?? 'design' }, 'profile']
   if ((m = /^\/@([a-z0-9_]{2,24})(\/send)?$/i.exec(p))) return ['page', { handle: m[1].toLowerCase(), send: Boolean(m[2]) }]
   return ['missing', {}]
 }

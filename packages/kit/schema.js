@@ -44,7 +44,8 @@ export const TOKEN_SCHEMA = {
   'header.style': { type: 'enum', group: 'Layout', label: 'Header', default: 'plain', options: ['plain', 'underline', 'bar', 'banner'] },
   'header.align': { type: 'enum', group: 'Layout', label: 'Header alignment', default: 'left', options: ['left', 'center'] },
   'density': { type: 'enum', group: 'Cards', label: 'Spacing', default: 'cozy', options: ['compact', 'cozy', 'airy'] },
-  'layout': { type: 'enum', group: 'Cards', label: 'Arrangement', default: 'list', options: ['list', 'grid'] },
+  'layout': { type: 'enum', group: 'Cards', label: 'Arrangement', default: 'list', options: ['list', 'grid', 'magazine', 'corkboard'], labels: { list: 'List', grid: 'Grid', magazine: 'Magazine', corkboard: 'Corkboard' } },
+  'card.objects': { type: 'enum', group: 'Cards', label: 'Cards as objects', default: 'no', options: ['no', 'yes'], labels: { no: 'No', yes: 'Tickets, receipts…' } },
   'card.style': { type: 'enum', group: 'Cards', label: 'Ryt style', default: 'card', options: ['card', 'plain'], labels: { card: 'Cards', plain: 'Plain list' } },
   'card.cover': { type: 'enum', group: 'Cards', label: 'Cover art', default: 'none', options: ['none', 'top', 'side'], labels: { none: 'None', top: 'On top', side: 'Beside' } },
   'chip.style': { type: 'enum', group: 'Cards', label: 'Category labels', default: 'outlined', options: ['filled', 'outlined', 'text'] },
@@ -57,14 +58,48 @@ export const SETTING_SCHEMA = {
   'cards.showPitch': { type: 'enum', label: 'Show why they recommended it', default: 'yes', options: ['yes', 'no'] },
 }
 
+// The blocks a page can show, in a default order. People turn them on and off, reorder and
+// rename them; a block with nothing to show draws nothing.
 export const SECTIONS = {
   'hero': 'Header',
+  'note': 'Pinned note',
+  'now-trying': 'Now trying',
+  'my-list': 'My list',
   'hall-of-fame': 'Top rated',
+  'wall': 'Wall of fame',
+  'ask': 'Ask me',
   'tried': 'Tried',
+  'lists': 'Lists',
+  'shelf': 'Shelf',
+  'map': 'Map',
+  'taste': 'My taste',
+  'recommenders': 'Best recommenders',
+  'circle': 'My circle',
+  'year': 'Year in review',
+  'shame': 'Hall of shame',
   'already-there': 'Already tried',
   'recommended-by-me': 'I recommended',
 }
-export const DEFAULT_SECTIONS = ['hero', 'hall-of-fame', 'tried', 'already-there', 'recommended-by-me']
+export const SECTION_HINTS = {
+  'note': 'A short message at the top',
+  'now-trying': 'What you are watching, reading or playing now',
+  'my-list': 'Your own list of things to try (a watch list, reading list…)',
+  'hall-of-fame': 'Your best-rated, as big cards',
+  'wall': 'Covers of everything you gave 10',
+  'ask': 'Ask for recommendations ("a good thriller?")',
+  'tried': 'Everything you tried, with filters',
+  'lists': 'Your own collections',
+  'shelf': 'Everything as spines on a shelf',
+  'map': 'Places you tried, on a map',
+  'taste': 'What you try most, and how you rate it',
+  'recommenders': 'Who gives you the best recommendations',
+  'circle': 'People you swap recommendations with',
+  'year': 'Your year in numbers',
+  'shame': 'Things you rated 3 or less',
+  'already-there': 'Things you had tried before',
+  'recommended-by-me': 'What you recommended to others',
+}
+export const DEFAULT_SECTIONS = ['hero', 'note', 'now-trying', 'my-list', 'hall-of-fame', 'ask', 'tried', 'lists', 'taste', 'recommenders', 'circle', 'already-there', 'recommended-by-me']
 
 export function isValid(spec, value) {
   switch (spec.type) {

@@ -98,10 +98,14 @@ export function themeVars(theme) {
   }
 }
 
+const OBJECT_FONTS = ['Bebas+Neue', 'Instrument+Serif:ital@0;1', 'Space+Mono:wght@400;700', 'Silkscreen', 'Shrikhand', 'Archivo+Black']
+
 export function fontHref(theme) {
   const families = [...new Set([theme.tokens['font.heading'], theme.tokens['font.body']])]
     .map(name => FONTS[name]?.google)
     .filter(Boolean)
+  // Cards as objects: each kind of recommendation has its own typeface.
+  if (theme.tokens['card.objects'] === 'yes') families.push(...OBJECT_FONTS)
   return families.length ? `https://fonts.googleapis.com/css2?${families.map(f => `family=${f}`).join('&')}&display=swap` : null
 }
 

@@ -3,7 +3,7 @@
 import fs from 'node:fs'
 import { render } from '../apps/page/render.js'
 import { runChecks } from '../packages/contract/check.js'
-import { resolveTheme } from '../packages/kit/index.js'
+import { resolveTheme, SECTIONS } from '../packages/kit/index.js'
 
 // The stylesheet must parse: one stray brace silently drops every rule after it.
 const css = fs.readFileSync(new URL('../apps/page/style.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
@@ -20,9 +20,13 @@ if (depth) {
   process.exit(1)
 }
 
-const { ok, results } = await runChecks(render, resolveTheme([]))
-for (const r of results) {
-  console.log(`${r.ok ? 'pass' : 'FAIL'}  ${r.fixture.padEnd(8)} ${String(r.ms).padStart(4)}ms  ${r.problems.join('; ')}`)
+// Twice: the default page, and every block turned on with the v2 layouts and object cards.
+const everything = resolveTheme([{ name: 'every block', sections: Object.keys(SECTIONS), tokens: { layout: 'corkboard', 'card.objects': 'yes', 'card.cover': 'top' } }])
+let ok = true
+for (const [label, theme] of [['default', resolveTheme([])], ['all blocks', everything]]) {
+  const run = await runChecks(render, theme)
+  ok &&= run.ok
+  for (const r of run.results) console.log(`${r.ok ? 'pass' : 'FAIL'}  ${label.padEnd(10)} ${r.fixture.padEnd(11)} ${String(r.ms).padStart(4)}ms  ${r.problems.join('; ')}`)
 }
 console.log(ok ? '\nall checks passed: this frontend can go live' : '\nchecks failed: the platform would keep your previous build live')
 process.exit(ok ? 0 : 1)

@@ -74,13 +74,15 @@ export function friendly(error) {
   if (/duplicate key|ryt_profiles_handle_key|already exists/i.test(m)) return 'That name is taken. Try another.'
   if (/check constraint.*handle/i.test(m)) return 'Use 2–24 letters, numbers or underscores.'
   if (/JWT|not authenticated|permission denied|row-level security/i.test(m)) return 'Please sign in again.'
+  // A v2 feature on a database without migrations 0003/0004.
+  if (/column .* does not exist|Could not find the (table|column|function)|on_list|ryt_lists|ryt_asks|ryt_react|ryt_answer/i.test(m)) return 'This needs the latest database update (0003, 0004). Run it in Supabase and try again.'
   if (/Failed to fetch|NetworkError|network/i.test(m)) return 'Can’t reach Recommend You This right now. Check your connection.'
   // The database words some messages with the short name; people read plain English.
   return (m.replace(/^.*?:\s*(?=[A-Z@])/, '') || 'Something went wrong.').replace(/\ba ryt\b/g, 'a recommendation').replace(/\bryts\b/g, 'recommendations')
 }
 
 export const CATEGORIES = ['Watch', 'Read', 'Listen', 'Play', 'Eat', 'Use', 'Go', 'Other']
-export const STATUS = { new: 'New', up_next: 'To try', tried: 'Tried', already_done: 'Already tried', passed: 'Skipped' }
+export const STATUS = { new: 'New', up_next: 'On my list', tried: 'Tried', already_done: 'Already tried', passed: 'Skipped' }
 
 export function timeAgo(iso) {
   const s = (Date.now() - new Date(iso).getTime()) / 1000

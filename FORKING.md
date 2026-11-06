@@ -50,24 +50,47 @@ your page with hostile data and fails if anything gets through.
 
 ```js
 data = {
-  owner: { handle, name, bio, profileUrl, avatar },     // avatar: an image link or null
-  links: { send, page, home },                           // "recommend me something", this page, the site
-  recs: [{                                               // only what the owner chose to show
+  owner: { handle, name, bio, profileUrl, avatar, note },  // note: the owner's pinned message
+  links: { send, page, home, thing },                       // thing: add ?q=<title> for "who else tried it"
+  labels: { tried: 'Stuff I tried', … },                    // the owner's own names for blocks
+  recs: [{                                                  // only what the owner chose to show
     id, title, url, cover, category, tags, pitch, review,
-    status,                                              // 'tried' or 'already_done'
-    rating,                                              // 1 to 10, or null
-    date,                                                // when it was tried, as an ISO date string
-    from,                                                // { name, handle, profileUrl }, or null if anonymous
+    status,                                                 // 'tried', 'already_done', 'trying' or 'want' (on their list)
+    rating,                                                 // 1 to 10, or null
+    date,                                                   // when it was tried (ISO date string)
+    from,                                                   // { name, handle, profileUrl }, or null if anonymous
+    progress,                                               // for 'trying': "episode 4 of 10"
+    pinned,                                                 // keep at the top
+    extra,                                                  // the owner's own fields: { "Where I watched": "PVR" }
+    reactions,                                              // { '🔥': 3, '👀': 0, '🙌': 1, '😂': 0 }
   }],
-  recommendedByMe: [{ id, title, to, status, rating }],  // what the owner recommended to others
-  stats: { tried, alreadyDone, avgRating },
+  lists: [{ id, title, description, items: [recId] }],     // the owner's lists
+  asks: [{ id, text, date }],                               // open requests: "a good thriller?"
+  circle: [{ name, handle, profileUrl, avatar, gave, got, avg }],  // people they swap recommendations with
+  recommendedByMe: [{ id, title, to, status, rating }],
+  stats: { tried, alreadyDone, trying, want, avgRating },
 }
 ```
 
 Every field is always there with a safe type (missing values become empty strings, empty
 lists or `null`), so you never need to check. `theme` is the owner's look: its `tokens`
-(colours, fonts, sizes), `settings`, section order and CSS. `client.js` applies it for you
-with `themeStyles(theme)`.
+(colours, fonts, sizes, layout), `settings`, the blocks they turned on (`sections`, in order)
+and CSS. `client.js` applies it for you with `themeStyles(theme)`.
+
+### Blocks
+
+The page is a stack of blocks the owner picks and orders in Settings → Page:
+`hero`, `note`, `now-trying`, `my-list`, `hall-of-fame`, `wall`, `ask`, `tried`, `lists`, `shelf`, `map`,
+`taste`, `recommenders`, `circle`, `year`, `shame`, `already-there`, `recommended-by-me`.
+Each is a function in [`packages/kit/sections.js`](packages/kit/sections.js). Override one in
+`render.js` (`sections.map = ({ data, theme }) => '…'`); a block that throws falls back to the
+default, and one that returns `''` is skipped.
+
+### Interactivity
+
+[`apps/page/interact.js`](apps/page/interact.js) adds filters, reactions, "new since your
+last visit" and "who else tried it". `client.js` runs it for you. Reactions and "who else
+tried it" go through Recommend You This as messages (your page has no network access).
 
 ## Rules
 
@@ -92,6 +115,8 @@ What `client.js` and Recommend You This say to each other, if you write your own
 | your page | `{ type: 'ryt:ready' }` | Drawn. |
 | your page | `{ type: 'ryt:error', message }` | Something broke (the normal page is shown). |
 | your page | `{ type: 'ryt:navigate', url }` | Please open this address. |
+| your page | `{ type: 'ryt:action', id, name, args }` | Please do this for me: `react(recId, emoji, ±1)` or `alsoTried(title)`. |
+| the site | `{ type: 'ryt:action-result', id, result }` | The answer. |
 
 ## Stay up to date
 

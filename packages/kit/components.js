@@ -36,7 +36,13 @@ export function rating(value, style = 'number') {
 // Cover art drawn from the title, so every recommendation gets one without uploading anything.
 const hue = s => [...String(s)].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7) % 360
 
-export function recCard(rec, theme) {
+// A link to "who else tried this" (a page per thing), when the host provides one.
+export const thingUrl = (links, title) => (links?.thing ? `${links.thing}?q=${encodeURIComponent(title)}` : null)
+export const REACTIONS = ['🔥', '👀', '🙌', '😂']
+
+// One recommendation. The essentials show; the rest (why, your own fields, who else tried it)
+// unfolds under "More", which works with no script at all. ctx: { links } from the page data.
+export function recCard(rec, theme, ctx = {}) {
   const showPitch = theme.settings['cards.showPitch'] === 'yes' && rec.pitch
   const title = rec.url
     ? `<a href="${esc(rec.url)}" target="_blank" rel="noopener noreferrer">${esc(rec.title)}</a>`
@@ -44,13 +50,24 @@ export function recCard(rec, theme) {
   // The sender's or owner's linked image, over generated art (which also shows if the link breaks).
   const coverImage = rec.cover ? `;--cover:url(&quot;${esc(rec.cover)}&quot;)` : ''
   const cover = theme.tokens['card.cover'] !== 'none' ? `<div data-ryt="cover" style="--h:${hue(rec.category + rec.title)}${coverImage}" aria-hidden="true"></div>` : ''
-  return `<article data-ryt="rec-card" data-status="${rec.status}" data-category="${esc(rec.category)}">
-  ${cover}<div data-ryt="card-head"><span data-ryt="category">${esc(rec.category)}</span>${rating(rec.rating, theme.tokens['rating.style'])}</div>
+  const extra = Object.entries(rec.extra ?? {})
+  const thing = thingUrl(ctx.links, rec.title)
+  const reactions = rec.reactions ?? {}
+  const more = extra.length || thing
+    ? `<details data-ryt="more"><summary>More</summary>
+    ${extra.length ? `<dl data-ryt="extra">${extra.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
+    ${thing ? `<p data-ryt="also"><a href="${esc(thing)}" data-ryt-nav>Who else tried it?</a></p>` : ''}
+  </details>`
+    : ''
+  return `<article data-ryt="rec-card" ${rec.id ? `id="r-${esc(rec.id)}" data-id="${esc(rec.id)}"` : ''} data-status="${rec.status}" data-category="${esc(rec.category)}" data-rating="${rec.rating ?? ''}" data-from="${esc(rec.from?.name ?? '')}" data-date="${esc((rec.date ?? '').slice(0, 10))}"${rec.pinned ? ' data-pinned="yes"' : ''}>
+  ${cover}<div data-ryt="card-head"><span data-ryt="category">${esc(rec.category)}</span>${rec.pinned ? '<span data-ryt="pin">Pinned</span>' : ''}${rating(rec.rating, theme.tokens['rating.style'])}</div>
   <h3 data-ryt="title">${title}</h3>
   ${showPitch ? `<blockquote data-ryt="pitch"><span data-ryt="label">Why:</span> ${esc(rec.pitch)}</blockquote>` : ''}
   ${rec.review ? `<p data-ryt="review"><span data-ryt="label">My review:</span> ${esc(rec.review)}</p>` : ''}
   ${rec.tags.length ? `<ul data-ryt="tags">${rec.tags.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
   <p data-ryt="credit">from ${personLink(rec.from)}${rec.date ? ` · ${shortDate(rec.date)}` : ''}</p>
+  ${rec.id ? `<div data-ryt="reactions" role="group" aria-label="React">${REACTIONS.map(e => `<button type="button" data-emoji="${e}" aria-label="${e} ${reactions[e] ?? 0}">${e}<span>${reactions[e] || ''}</span></button>`).join('')}</div>` : ''}
+  ${more}
 </article>`
 }
 
@@ -60,7 +77,8 @@ export function empty(text) {
 
 // "Send me a ryt", drawn with the page's own theme (built-in designs and forks). Plain form
 // controls tagged with data-ryt hooks; it posts to the platform like any form.
-export function sendForm({ owner, viewer, categories, error, sent, closed, accountsOnly, values = {} }) {
+// ask: the request this answers ("I need a good thriller"), if any.
+export function sendForm({ owner, viewer, categories, error, sent, closed, accountsOnly, ask = null, values = {} }) {
   const field = (label, control, hint = '') => `<label data-ryt="field"><span>${esc(label)}${hint ? ` <small>${esc(hint)}</small>` : ''}</span>${control}</label>`
   const head = `<div data-ryt="hero"><p data-ryt="eyebrow">@${esc(owner.handle)}</p><h1>Recommend ${esc(owner.name)} something</h1>
   <p data-ryt="tagline">A film, a book, a game, a place. I will try it and share what I think.</p></div>`
@@ -69,6 +87,7 @@ export function sendForm({ owner, viewer, categories, error, sent, closed, accou
   return `${head}
 ${sent ? `<p data-ryt="notice" data-tone="success"><strong>Sent. Thank you!</strong></p>` : ''}
 ${error ? `<p data-ryt="notice" data-tone="error">${esc(error)}</p>` : ''}
+${ask ? `<p data-ryt="notice" data-tone="ask">Answering ${esc(owner.name.split(' ')[0])}’s request: <strong>“${esc(ask)}”</strong></p>` : ''}
 <form data-ryt="send-form" method="post">
   ${field('Link', `<input name="url" type="url" inputmode="url" placeholder="Paste a link (YouTube, Spotify, Maps…)" value="${esc(values.url)}">`, '(optional, fills in the rest)')}
   <p data-ryt="autofill" aria-live="polite"></p>

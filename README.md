@@ -6,6 +6,14 @@ Friends recommend things to you. You try them and share what you think.
   without an account.
 - **Your inbox.** Private. Mark things *to try*, *tried*, *already tried* or *skip*. Rate them,
   write a short review, keep notes only you see.
+- **My list.** Your own watch list, reading list, places to go. Add anything yourself; it shows
+  on your page under "My list" unless you hide it.
+- **Your page, your way.** Turn on, reorder and rename blocks: Now trying, My list, Top rated, Wall of
+  fame, Ask me, Lists, Shelf, Map, My taste, Best recommenders, My circle, Year in review,
+  Hall of shame. Arrange it as a list, grid, magazine or corkboard, with cards drawn as tickets,
+  receipts and cassettes.
+- **Wander.** Visitors filter, react, unfold cards, see who else tried something, follow people
+  through the circle, or press 🎲 for a surprise.
 - **Your look.** Pick one of 327 designs (every theme from the Hugo theme gallery, translated
   to fit), then change colours, fonts and layout.
 - **Your code.** Fork this repository and your page is drawn by your own code.
@@ -24,8 +32,8 @@ The full guide, with what you can change and the data your page gets: **[FORKING
 
 ```sh
 npm install
-npm run web:mock   # http://localhost:4000 with demo data in your browser, no sign-in
-                   # add ?as=mira, ?as=kai, ?as=new or ?as=nobody to switch who you are
+npm run web:mock   # http://localhost:4000 with a demo world in your browser, no sign-in
+                   # ?as=aneesh (richest page), mira, kai, priya, rhea…, ?as=new, ?as=nobody; ?reset
 npm run web        # the same against Supabase (needs .env, see .env.example)
 npm run page       # just the page code, with sample data: http://localhost:4100/preview.html
 npm run check      # tests the page code with empty, huge, messy and hostile data
@@ -35,7 +43,7 @@ npm run build      # dist/ for GitHub Pages (the app, plus the page code at dist
 ## Run your own copy of the whole site
 
 1. **Supabase** (the free plan is enough; a shared project is fine):
-   - SQL Editor: run the files in [`supabase/migrations/`](supabase/migrations/) in order. They only
+   - SQL Editor: run the files in [`supabase/migrations/`](supabase/migrations/) in order (0001 to 0004). They only
      add `ryt_*` tables, a view and functions, and are safe to run twice.
    - Authentication → Providers: turn on **Google**.
    - Authentication → URL Configuration → Redirect URLs: add `http://localhost:4000/**` and
