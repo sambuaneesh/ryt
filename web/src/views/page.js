@@ -24,7 +24,7 @@ export async function show(root, { params, session, go, refresh }) {
   const [{ data }, theme] = await Promise.all([loadPage(api, profile), themeOf(profile)])
   const actions = pageActions(api)
   const own = session.profile?.id === profile.id
-  document.title = params.send ? `Recommend ${profile.name} something · Recommend You This` : `${profile.name}’s recommendations · Recommend You This`
+  document.title = params.send ? `Recommend ${profile.name} something · Recommend You This` : `Recommended to ${profile.name} · Recommend You This`
 
   root.innerHTML = '<iframe class="page-frame" title="" data-frame></iframe>'
   const frame = root.querySelector('[data-frame]')

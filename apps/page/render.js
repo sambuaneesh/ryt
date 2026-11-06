@@ -20,7 +20,7 @@ function header(data) {
   ]
   const hue = [...owner.handle].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7) % 360
   return `<header data-ryt="header" style="--h:${hue}">
-  <a data-ryt="brand" href="${esc(owner.profileUrl ?? '#')}">${esc(owner.name)}’s recommendations</a>
+  <a data-ryt="brand" href="${esc(owner.profileUrl ?? '#')}">Recommended to ${esc(owner.name)}</a>
   <nav data-ryt="nav">${nav.map(([href, label]) => `<a href="${esc(href)}">${esc(label)}</a>`).join('')}</nav>
 </header>`
 }
@@ -34,7 +34,7 @@ export function render({ data, theme, onFallback, body }) {
     frame: t.frame, hero: t['hero.style'], avatar: t['hero.avatar'], objects: t['card.objects'],
   }
   const open = `<div data-ryt="page" ${Object.entries(attrs).map(([k, v]) => `data-${k}="${esc(v)}"`).join(' ')}>`
-  const footer = `<footer data-ryt="footer">${esc(data.owner.name)}’s recommendations · on <a href="${esc(data.links.home ?? '/')}">Recommend You This</a></footer>`
+  const footer = `<footer data-ryt="footer">Recommended to ${esc(data.owner.name)} · on <a href="${esc(data.links.home ?? '/')}">Recommend You This</a></footer>`
   const ctx = { data, theme }
   const content = ids => (body != null ? (ids.includes('hero') ? '' : `<section data-ryt="section" data-section="send">${body}</section>`) : renderSections({ ids, sections, ctx, onFallback }))
   // Sidebar frame: brand, menu and profile share one column beside the ryts.

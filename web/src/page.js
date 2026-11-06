@@ -68,7 +68,7 @@ export function pageActions(api) {
 export function pageDocument({ data, theme, body, title }) {
   const fonts = fontHref(theme)
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(title ?? `${data.owner.name}’s recommendations`)}</title>
+<title>${esc(title ?? `Recommended to ${data.owner.name}`)}</title>
 ${fonts ? `<link rel="stylesheet" href="${esc(fonts)}">` : ''}
 <style>${theme.tokens.styles === 'plain' ? '' : pageCss}</style>
 <style>${themeStyles(theme)}</style>
