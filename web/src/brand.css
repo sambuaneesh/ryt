@@ -259,7 +259,7 @@ h2.section .faint { font-weight: 400; text-transform: none; letter-spacing: 0; c
 .dots button { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ink); background: var(--sheet); color: var(--ink); font: 700 13px/1 var(--mono); cursor: pointer; }
 .dots button:hover { background: var(--paper); }
 .dots button[aria-pressed="true"] { background: var(--yellow); transform: rotate(-8deg) scale(1.1); }
-@media (max-width: 720px) { .rec { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .rec { grid-template-columns: minmax(0, 1fr); } }
 
 /* ---------------- sent ---------------- */
 .sent-list { display: grid; gap: 0; border-top: 2px solid var(--ink); }
@@ -414,3 +414,8 @@ dialog.sheet.wide iframe { width: 100%; height: 100%; border: 0; background: #ff
 @media (max-width: 700px) { .to-page .short { display: inline; } }
 code { overflow-wrap: anywhere; }
 @media (max-width: 700px) { .swatches { grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 12px 8px; padding: 14px; } .swatches input[type=color] { width: 38px; height: 38px; } }
+
+/* Long links and words people paste must never push the page wider than the screen. */
+html, body { overflow-x: clip; }
+.obj-title, .obj-from, .rec-pitch, .rec-review, .rec-meta, .sent-item .what, .row .label, .notice, .empty, .lede { overflow-wrap: anywhere; }
+.rec, .rec-side, .rec-more, .obj { min-width: 0; max-width: 100%; }

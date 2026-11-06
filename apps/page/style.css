@@ -6,6 +6,9 @@
 
 @layer reset {
   *, *::before, *::after { box-sizing: border-box; }
+  /* Pasted links and long words wrap instead of widening the page. */
+  [data-ryt="title"], [data-ryt="pitch"], [data-ryt="review"], [data-ryt="credit"], [data-ryt="bio"], [data-ryt="brand"], h1, h2, h3, p, li { overflow-wrap: anywhere; }
+  html, body { overflow-x: clip; }
   html, body { margin: 0; }
   img { max-width: 100%; }
 }
