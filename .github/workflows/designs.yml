@@ -1,0 +1,47 @@
+# Keeps the design gallery current: once a week, measure Hugo themes that are new to
+# themes.gohugo.io (Hugo + headless Chrome, see apps/platform/hugo/) and commit their designs
+# to web/public/designs. Themes already published are left alone. Then it starts pages.yml
+# (a push made by this workflow's token doesn't trigger other workflows on its own).
+
+name: Refresh designs
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: designs
+
+jobs:
+  refresh:
+    # Only the main repository keeps the gallery; forks don't need to.
+    if: ${{ !github.event.repository.fork }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Measure new themes
+        run: node scripts/designs/export.mjs --measure
+        env:
+          CHROMIUM_BIN: google-chrome
+      - name: Commit
+        run: |
+          git add web/public/designs
+          if git diff --cached --quiet; then echo "No new designs."; exit 0; fi
+          git config user.name "ryt-designs"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "designs: add newly published gallery themes"
+          git push
+          gh workflow run pages.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}

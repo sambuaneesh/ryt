@@ -1,0 +1,19 @@
+{
+  "label": "Midnight",
+  "description": "Dark, soft glow, rounded cards in a grid.",
+  "extends": "base",
+  "tokens": {
+    "color.bg": "#0f1117",
+    "color.surface": "#171a23",
+    "color.text": "#e6e8ef",
+    "color.muted": "#9097a8",
+    "color.border": "#272b38",
+    "color.accent": "#8ab4ff",
+    "color.rating": "#fbbf24",
+    "font.heading": "Space Grotesk",
+    "font.body": "Inter",
+    "radius": 16,
+    "layout": "grid",
+    "rating.style": "bar"
+  }
+}

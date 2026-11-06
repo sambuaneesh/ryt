@@ -1,0 +1,20 @@
+{
+  "label": "Paper",
+  "description": "Warm, bookish, serif. A reading journal.",
+  "extends": "base",
+  "tokens": {
+    "color.bg": "#fbf7ef",
+    "color.surface": "#fffdf8",
+    "color.text": "#2b2620",
+    "color.muted": "#7a6f62",
+    "color.border": "#e6dccb",
+    "color.accent": "#9a3412",
+    "color.rating": "#b45309",
+    "font.heading": "Fraunces",
+    "font.body": "Lora",
+    "radius": 4,
+    "shadow": "none",
+    "density": "airy",
+    "rating.style": "stars"
+  }
+}

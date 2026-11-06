@@ -1,0 +1,24 @@
+{
+  "label": "Terminal",
+  "description": "Green on black, monospace, compact. Extends Midnight.",
+  "extends": "midnight",
+  "tokens": {
+    "color.bg": "#000000",
+    "color.surface": "#050805",
+    "color.text": "#7CFC9A",
+    "color.muted": "#3f9f5a",
+    "color.border": "#1f4d2c",
+    "color.accent": "#b6ffc8",
+    "color.rating": "#7CFC9A",
+    "font.heading": "JetBrains Mono",
+    "font.body": "IBM Plex Mono",
+    "radius": 0,
+    "density": "compact",
+    "layout": "list",
+    "rating.style": "number"
+  },
+  "css": [
+    "[data-ryt=\"hero\"] h1::before { content: \"$ whoami\\A\"; white-space: pre; font-size: .5em; color: var(--ryt-muted); }",
+    "[data-ryt=\"section\"] > h2::before { content: \"## \"; color: var(--ryt-muted); }"
+  ]
+}

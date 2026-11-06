@@ -1,0 +1,31 @@
+{
+  "name": "ryt",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Recommend You This: friends recommend things to you, you try them and share what you think. A static web app on Supabase, with pages you can restyle or fork.",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "setup": "node scripts/setup-demo.mjs",
+    "start": "node apps/platform/server.mjs",
+    "dev": "node --watch apps/platform/server.mjs",
+    "check": "node scripts/check.mjs",
+    "web": "vite --config web/vite.config.js",
+    "web:mock": "vite --config web/vite.config.js --mode mock",
+    "build:web": "vite build --config web/vite.config.js",
+    "preview:web": "vite preview --config web/vite.config.js",
+    "designs": "node scripts/designs/export.mjs",
+    "build:page": "vite build --config apps/page/vite.config.js",
+    "build": "npm run build:web && npm run build:page",
+    "page": "vite --config apps/page/vite.config.js --open /preview.html"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.7"
+  },
+  "license": "MIT"
+}
