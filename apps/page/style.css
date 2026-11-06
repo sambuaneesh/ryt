@@ -178,6 +178,12 @@
   [data-ryt="nav"] { display: flex; gap: 6px 18px; flex-wrap: wrap; text-transform: var(--ryt-nav-case); }
   [data-ryt="nav"] a { color: inherit; text-decoration: none; opacity: .85; }
   [data-ryt="nav"] a:hover { opacity: 1; color: var(--ryt-accent); }
+  /* Phones: links on top, then "Recommended to:" sitting right above the name it introduces. */
+  @media (max-width: 560px) {
+    [data-ryt="header"] { flex-direction: column; align-items: flex-start; gap: 10px; }
+    [data-ryt="nav"] { order: -1; font-size: .85em; }
+    [data-ryt="page"] > [data-ryt="header"]:not([data-header="banner"] *) + * { margin-top: calc(var(--ryt-gap) * -2.4 + 14px); }
+  }
   [data-header-align="center"] [data-ryt="header"] { flex-direction: column; justify-content: center; }
   [data-header="underline"] [data-ryt="header"] { padding-bottom: calc(var(--ryt-gap) * .8); border-bottom: max(1px, var(--ryt-border-w)) solid var(--ryt-border); }
   [data-header="bar"] [data-ryt="header"] {
