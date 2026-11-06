@@ -20,7 +20,7 @@ function header(data) {
   ]
   const hue = [...owner.handle].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7) % 360
   return `<header data-ryt="header" style="--h:${hue}">
-  <a data-ryt="brand" href="${esc(owner.profileUrl ?? '#')}">Recommended to ${esc(owner.name)}</a>
+  <a data-ryt="brand" href="${esc(owner.profileUrl ?? '#')}">Recommended to:</a>
   <nav data-ryt="nav">${nav.map(([href, label]) => `<a href="${esc(href)}">${esc(label)}</a>`).join('')}</nav>
 </header>`
 }
